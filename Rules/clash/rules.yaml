@@ -1,0 +1,316 @@
+# 目前Clash支持的规则类型如下:
+  # DOMAIN-SUFFIX：域名后缀匹配
+  # DOMAIN：域名匹配
+  # DOMAIN-KEYWORD：域名关键字匹配
+  # IP-CIDR：IP段匹配
+  # SRC-IP-CIDR：源IP段匹配
+  # GEOIP：GEOIP数据库（国家代码）匹配
+  # DST-PORT：目标端口匹配
+  # SRC-PORT：源端口匹配
+  # PROCESS-NAME：源进程名匹配
+  # RULE-SET：Rule Provider规则匹配
+  # MATCH：全匹配
+
+# 全球域名：
+  # https://github.com/v2fly/domain-list-community
+
+# 官方各字段说明：
+  # https://github.com/Dreamacro/clash/wiki/configuration
+
+# 相关教程：
+  # https://www.jamesdailylife.com/rule-proxy-provider
+  # https://blog.hifool.cn/posts/f42b65b0/
+  # https://vlike.work/tech/how-to-clash.html
+
+# 常规设置
+
+port: 7890       # HTTP 代理端口，用于监听来自客户端的 HTTP 请求
+socks-port: 7891 # Socks5 代理端口，用于监听来自客户端的 Socks5 请求
+redir-port: 7892 # TUN/TAP 红/透明代理端口，用于监听来自客户端的透明代理请求
+allow-lan: false # 是否允许局域网设备连接。当设置为 true 时，我们可以在同一局域网内的其他设备上配置代理，指向 Clash 运行的设备，实现局域网内共享代理服务
+bind-address: "*" # 指定监听地址，"*" 表示监听所有可用地址
+mode: Rule # 代理模式，可选值有: Rule（规则模式，根据规则判断是否走代理） / Global（全局模式，所有流量都走代理） / Direct（直连模式，所有流量都不走代理）
+log-level: info # 日志级别，可选值有: silent（静默） / info（普通） / warning（警告） / error（错误） / debug（调试）
+external-controller: '0.0.0.0:9090' # 外部控制器地址，用于 Clash 的外部控制，如 Clash Dashboard 或其他第三方控制面板
+# external-ui: "/ui_directory" # 外部 UI 目录，用于自定义 Clash 的 Web UI
+secret: "" # 外部控制器密钥，用于控制面板连接时的身份验证
+# authentication: # Clash HTTP 代理的身份验证凭据
+  # - "username:password"
+experimental:
+  ignore-resolve-fail: true
+
+#--------------------------------------------------华丽的分割线---------------------------------------------------
+
+# dns 配置
+# 详细解释：
+  # enable: 是否启用内置的DNS服务器，如果为false，将使用系统的DNS设置
+  # ipv6: 是否启用IPv6的DNS解析，如果为true，将尝试解析AAAA记录
+  # listen: 内置DNS服务器的监听地址，格式为ip:port
+    # enhanced-mode: 
+      # - fake-ip: 为所有域名返回一个虚假的IP地址，并在内部建立域名和IP的映射关系，可以加速连接建立和避免DNS污染，但可能与一些需要检查域名和IP是否匹配的应用不兼容
+      # - redir-host: 修改请求的Host头，使其与域名一致，可以避免DNS污染，但可能受到SNI阻断的影响
+      # - none: 不使用任何DNS增强模式，只使用纯净的DNS服务器返回的结果
+  # fake-ip-range: fake-ip模式下使用的虚假IP地址范围，格式为CIDR，例如198.18.0.1/16
+  # fake-ip-filter: fake-ip模式下不使用虚假IP地址的域名列表，支持通配符和正则表达式，例如*.lan, /.+\.local\./
+  # default-nameserver: 默认的DNS服务器列表，当域名不匹配任何规则时，将使用这些服务器进行解析，推荐使用公共的或者本地的DNS服务器，例如223.5.5.5, 114.114.114.114
+  # nameserver: 可选的DNS服务器列表，当域名匹配相应的规则时，将使用这些服务器进行解析，可以提高解析质量和速度，例如119.29.29.29, 8.8.8.8
+  # fallback: 备选的DNS服务器列表，当默认或者可选的DNS服务器无法返回有效的结果时，将使用这些服务器进行解析，推荐使用防污染的DNS服务器，例如1.1.1.1, 9.9.9.9
+    # fallback-filter:
+      # geoip: 是否启用geoip过滤，如果为true，将过滤掉与本地IP不匹配的结果
+      # ipcidr: 需要过滤掉的IP地址范围列表，格式为CIDR，例如240.0.0.0/4, ::1/128
+      # domain: 需要过滤掉的域名列表，支持通配符和正则表达式，例如*.google.com, /.+\.facebook\./
+  # hosts: 静态的域名和IP地址映射表，类似于/etc/hosts文件，支持通配符域名
+
+dns:
+  enable: true                 # 启用 Clash 内置 DNS。当 enable 为 true 时，Clash 会处理 DNS 请求，进行智能分流以优化代理效果
+  ipv6: false                  # 禁用 IPv6。当 ipv6 为 true 时，Clash 会同时处理 IPv4 和 IPv6 的 DNS 请求，如果您的网络环境支持 IPv6，可设置为 true
+  listen: 0.0.0.0:53           # 监听地址和端口。您可以通过修改此字段让其他设备向 Clash 发送 DNS 请求
+  enhanced-mode: redir-host    # 增强模式类型。可选值有: redir-host（基于域名的分流，兼容性更好） / fake-ip（基于伪造 IP 的分流，可能对部分应用造成影响）
+  use-hosts: true              # 使用本地 hosts 文件。当 use-hosts 为 true 时，Clash 会读取本地 hosts 文件（/etc/hosts 或类似路径），优先匹配其中的域名解析结果
+  # hosts:                      # 自定义 hosts，可以直接在此添加或使用外部文件
+  #   "domainA": "192.168.1.1"
+  #   "domainB": "192.168.1.2"
+  default-nameserver:          # 默认的上游 DNS 服务器，当 nameserver 未定义时使用
+    - 1.1.1.1
+  nameserver:                  # 上游 DNS 服务器。Clash 会将 DNS 请求发送至这些服务器进行解析
+    - 119.29.29.29             # DNSpod DNS 17ms
+    - 223.5.5.5                # 阿里 DNS。您可以添加多个 DNS 服务器地址，按照优先级排序
+    - 1.2.4.8
+    - 8.8.8.8                  # Google DNS
+    - tls://8.8.8.8:853        # Google DNS over TLS
+    - tls://8.8.4.4:853        # cloudflare DNS over TLS
+    - tls://dns.adguard.com:853
+    - https://1.1.1.1/dns-query # cloudflare DNS over HTTPS
+    - https://dns.google/dns-query # Google DNS over HTTPS
+    # - quic://dns.adguard.com   # DNS-over-QUIC 示例，使用 AdGuard 的 DoQ 服务，暂不支持
+    - dhcp:///eth0             # DHCP 示例，获取指定网卡上的 DHCP 分配的 DNS 服务器（这里是 eth0 网卡）。mac查看所有网卡命令：ifconfig
+    #关于nameserver的更多注意事项：
+      # 如果你在公司使用clash，可能会出现内网无法打开的情况，你也可以在此处加上自己公司内网的DNS，这样就可以解析到内网域名对应的ip
+        # linux查看内网DNS：cat /etc/resolv.conf
+
+  fallback:                    # 回落 DNS 服务器。当 nameserver 无法解析域名时，Clash 会向这些服务器请求解析
+    - 8.8.4.4                  # Google DNS
+    - 1.1.1.1                  # Cloudflare DNS
+    - tls://8.8.8.8:853        # Google DNS over TLS
+    - tls://8.8.4.4:853        # cloudflare DNS over TLS
+    - tls://dns.adguard.com:853
+    - https://1.1.1.1/dns-query # cloudflare DNS over HTTPS
+    - https://dns.google/dns-query # Google DNS over HTTPS
+  fallback-filter:             # 回落 DNS 服务器过滤设置
+    # true: CN使用nameserver解析，非CN使用fallback
+    geoip: true                # 是否启用基于 GEOIP 的过滤。当 geoip 为 true 时，Clash 会根据 GEOIP 数据库判断解析结果的 IP 地址是否位于国外，如果位于国外，则采用 fallback DNS 进行解析
+    # geoip-code: 'CN'               # 仅使用指定国家的 DNS 结果，例如 'CN' 仅保留中国的 DNS 结果
+    # geoip设置为false时有效： 不匹配`ipcidr`地址时会使用`nameserver`结果，匹配`ipcidr`地址时使用`fallback`结果。
+    ipcidr:                    # 要过滤的 IP 段。您可以添加需要过滤的 IP 段，当解析结果的 IP 地址属于这些 IP 段时，Clash 会使用 fallback DNS 进行解析
+      - 240.0.0.0/4
+    # domain:                    # 使用域名规则过滤
+    #   # - '+.google.com' # + 表示允许，
+      # - '-.youtube.com' # - 表示拒绝
+      
+#--------------------------------------------------华丽的分割线---------------------------------------------------
+
+# proxy-providers配置
+# 详细解释：
+  # proxy-providers就是节点池
+  # example-name: 定义一个或多个代理提供商，每个提供商有唯一的名称，可以是自定义的。
+    # type: 指定代理提供者的类型。支持 http 和 file 两种类型，http 从远程 URL 获取代理配置，file 从本地文件获取代理配置。
+      # 应用场景：当需要动态更新代理列表时，可使用 http 类型；当有一个本地代理配置文件时，可使用 file 类型。
+    # filter: 支持正则匹配过滤节点
+    # url: 当代理提供者类型为 http 时，指定远程配置文件的 URL。Clash 将从该 URL 下载代理配置，并根据 interval 设置的时间间隔进行更新。
+    # path: 当代理提供者类型为 file 时，指定本地配置文件的路径。该路径可以是相对路径或绝对路径。Clash 将从该文件读取代理配置。当代理提供者类型为 http 时，表示将远程配置文件下载到此目录文件
+    # interval: 代理提供者更新间隔，单位为秒。对于 http 类型的代理提供者，Clash 将根据此设置的时间间隔自动更新代理列表。对于 file 类型的代理提供者，此设置无效。
+    # health-check: 代理提供者的健康检查设置，以确保代理列表中的代理可用。
+      # enable: 是否启用健康检查。如果为 true，Clash 将根据以下配置定期检查代理的可用性。如果为 false，则不进行健康检查。
+        # 应用场景：当想要确保代理列表中的代理始终可用时，可启用健康检查。如果确定代理始终可用，或者不关心代理的可用性，可禁用健康检查。
+      # interval: 健康检查间隔，单位为秒。Clash 将根据此设置的时间间隔对代理进行健康检查。
+        # 应用场景：如果希望 Clash 更频繁地检查代理的可用性，可以设置较短的间隔。如果不希望 Clash 过于频繁地检查代理，可以设置较长的间隔。
+      # url: 健康检查 URL。Clash 将通过代理访问此 URL 以检查代理的可用性。这个 URL 应该是一个可以快速响应且始终可用的地址。
+        # 应用场景：可以选择一个稳定的、速度较快的 URL 作为健康检查 URL，以便准确地检测代理的可用性。
+      # timeout: 健康检查超时时间，单位为秒。如果代理在此超时时间内无法访问健康检查 URL，Clash 将认为该代理不可用。
+        # 应用场景：如果您希望对代理的响应速度有较高要求，可以设置较短的超时时间。如果您希望允许代理有较长的响应时间，可以设置较长的超时时间
+proxy-providers:
+  ALL:
+    type: http
+    url: "填写你的订阅链接"
+    path: ./profiles/node.yml
+    interval: 36000
+    health-check:
+      enable: true
+      url: http://www.gstatic.com/generate_204
+      interval: 3600
+  EXCLUDE_GAMES:
+    type: http
+    url: "填写你的订阅链接"
+    path: ./profiles/node.yml
+    interval: 36000
+    filter: '(?i).*large.*|.*Lil.*|.*super.*'
+    health-check:
+      enable: true
+      url: http://www.gstatic.com/generate_204
+      interval: 3600
+
+#--------------------------------------------------华丽的分割线---------------------------------------------------
+
+# proxy-groups配置
+# 详细解释
+# name: 代理组的名称，必须唯一，不能和 proxies 中的代理名称重复。
+# type: 代理组的类型，有以下几种：
+  # select: 手动选择一个代理服务器，支持 UDP 转发。
+  # url-test: 自动测试所有代理服务器的延迟和可用性，并选择最优的一个，支持 UDP 转发。
+  # fallback: 自动监测所有代理服务器的可用性，并选择第一个可用的一个，支持 UDP 转发。
+  # load-balance: 自动根据每个代理服务器的负载情况，分配不同的流量，支持 UDP 转发。
+  # relay: 将请求通过指定的代理服务器依次转发，不支持 UDP 转发。
+# proxies: 代理组包含的代理服务器列表，可以是 proxies 中定义的代理名称，也可以是另一个代理组的名称。
+# url: url-test 类型的代理组需要指定一个用于测试延迟和可用性的 URL。
+# interval: url-test 类型的代理组需要指定一个测试间隔，单位是秒。
+# timeout: url-test 和 fallback 类型的代理组需要指定一个测试超时时间，单位是秒。
+# tolerance: fallback 类型的代理组需要指定一个容忍度，表示当前选择的代理与最优代理之间的延迟差值，单位是毫秒。
+# lazy: fallback 类型的代理组可以指定一个布尔值，表示是否启用惰性检测模式。如果为 true，则只有当当前选择的代理不可用时才会触发检测，否则按照 interval 的间隔进行检测。
+# strategy: load-balance 类型的代理组需要指定一个负载均衡策略，有以下几种：
+  # consistent-hashing: 一致性哈希算法，根据请求源地址和目标地址计算哈希值，并分配给相应的代理服务器。
+  # round-robin: 轮询算法，按照顺序依次分配给不同的代理服务器。
+  # random: 随机算法，随机分配给不同的代理服务器。
+proxy-groups:
+  - name: LOWEST_DELAY # 低延迟节点
+    type: url-test
+    url: http://www.gstatic.com/generate_204
+    interval: 3600
+    use:
+      - ALL
+
+  - name: MANUAL_SELECTION # 自选节点
+    type: select
+    url: http://www.gstatic.com/generate_204
+    interval: 3600
+    use:
+      - ALL
+
+  - name: HIGH_SPEED # 高速节点（为防止流量高消耗，已过滤游戏节点）
+    type: url-test
+    url: http://www.gstatic.com/generate_204
+    interval: 3600
+    use:
+      - EXCLUDE_GAMES
+
+#--------------------------------------------------华丽的分割线---------------------------------------------------
+
+# 规则集：可以多多参考，然后结合起来形成自己的域名规则
+  # github流行的规则集：
+    # 1. https://github.com/Loyalsoldier/clash-rules #(这个是clash规则库)
+    # 2. https://github.com/Loyalsoldier/v2ray-rules-dat/blob/release/ #(已结合的庞大的域名代理列表)
+    # 3. https://github.com/v2fly/domain-list-community/blob/master/data #(已分类好的域名代理列表)
+  # 规则配置注意事项：
+    # 1.高带宽的策略组放在其他策略组之前：
+      # 比如youtube的最好放在google的前面，不然可能会出现youtube匹配googlevideo.com的时候
+      # 如果google配置在youtube前面，googlevideo.com会命中google的策略组。
+      # 假如goole的策略组是游戏节点，这个时候youtube播放视频，走的就是游戏节点。
+
+rules:
+# youtube
+  - DOMAIN-SUFFIX,youtube.com,HIGH_SPEED
+  - DOMAIN-SUFFIX,youtu.be,HIGH_SPEED
+  - DOMAIN-SUFFIX,youtube-nocookie.com,HIGH_SPEED
+  - DOMAIN-SUFFIX,ytimg.com,HIGH_SPEED
+  - DOMAIN-SUFFIX,googlevideo.com,HIGH_SPEED
+  - DOMAIN-SUFFIX,yt3.ggpht.com,HIGH_SPEED
+  - DOMAIN-SUFFIX,yt3.ggpht.cn,HIGH_SPEED
+  - DOMAIN-SUFFIX,googleusercontent.com,HIGH_SPEED
+  - DOMAIN-SUFFIX,googleapis.com,HIGH_SPEED
+  - DOMAIN-SUFFIX,yt3.ggpht.net,HIGH_SPEED
+  - DOMAIN-SUFFIX,ytimg.l.googleusercontent.com,HIGH_SPEED
+  - DOMAIN-KEYWORD,youtube,HIGH_SPEED
+  - DOMAIN-KEYWORD,youtu,HIGH_SPEED
+  - DOMAIN-KEYWORD,ytimg,HIGH_SPEED
+  - DOMAIN-KEYWORD,googlevideo,HIGH_SPEED
+  - DOMAIN-KEYWORD,ggpht,HIGH_SPEED
+
+# github
+  - DOMAIN-SUFFIX,git-scm.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,git.io,LOWEST_DELAY
+  - DOMAIN-SUFFIX,git.wft44maqbweb.xyz,LOWEST_DELAY
+  - DOMAIN-SUFFIX,git2.wft44maqbweb.xyz,LOWEST_DELAY
+  - DOMAIN-SUFFIX,git3.wft44maqbweb.xyz,LOWEST_DELAY
+  - DOMAIN-SUFFIX,gitbook.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,gitbook.io,LOWEST_DELAY
+  - DOMAIN-SUFFIX,github.blog,LOWEST_DELAY
+  - DOMAIN-SUFFIX,github.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,github.community,LOWEST_DELAY
+  - DOMAIN-SUFFIX,github.dev,LOWEST_DELAY
+  - DOMAIN-SUFFIX,github.io,LOWEST_DELAY
+  - DOMAIN-SUFFIX,githubapp.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,githubassets.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,githubhackathon.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,githubpreview.dev,LOWEST_DELAY
+  - DOMAIN-SUFFIX,githubstatus.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,githubuniverse.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,githubusercontent.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,gitlab-static.net,LOWEST_DELAY
+  - DOMAIN-SUFFIX,gitlab.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,gitlab.io,LOWEST_DELAY
+  - DOMAIN-SUFFIX,gitlab.net,LOWEST_DELAY
+
+# google 
+  - DOMAIN-KEYWORD,google,LOWEST_DELAY
+
+# openai
+  - DOMAIN-SUFFIX,openai.com,LOWEST_DELAY
+
+# bing
+  - DOMAIN-SUFFIX,bing.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,bing.com.cn,LOWEST_DELAY
+  - DOMAIN-SUFFIX,bingads.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,bingads.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,bingagencyawards.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,bingapis.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,bingapistatistics.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,bingiton.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,bingj.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,bingnews.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,bingplaces.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,bingpreview.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,bingtranslator.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,bingtoolbar.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,bingwallpaper.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,bingworld.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,bingsandbox.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,bingsandbox.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,bluehatnights.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,dictate.ms,LOWEST_DELAY
+  - DOMAIN-SUFFIX,flipwithsurface.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,microsoft-give.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,microsoftcloudsummit.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,microsoftdiplomados.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,microsoftlatamholiday.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,microsoftmxfilantropia.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,microsoftpartnersolutions.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,msedge.net,LOWEST_DELAY
+  - DOMAIN-SUFFIX,msn.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,msunlimitedcloudsummit.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,office365love.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,office365tw.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,renovacionoffice.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,ssl.bing.com,LOWEST_DELAY
+  - DOMAIN-SUFFIX,sprinklesapp.com,LOWEST_DELAY
+  - DOMAIN-KEYWORD,bing,LOWEST_DELAY
+  - DOMAIN-KEYWORD,msedge,LOWEST_DELAY
+  - DOMAIN-KEYWORD,msn,LOWEST_DELAY
+
+
+# other
+  - DOMAIN-SUFFIX,hitun.io,LOWEST_DELAY # 海豚湾
+  - DOMAIN-SUFFIX,v2ex.com,LOWEST_DELAY 
+ 
+# Intranet
+  - DOMAIN-KEYWORD,superboss,DIRECT
+  - DOMAIN-KEYWORD,raycloud,DIRECT
+  - DOMAIN-KEYWORD,kuaidizs,DIRECT
+
+# LAN
+  - IP-CIDR,10.0.0.0/8,DIRECT
+  - IP-CIDR,172.16.0.0/12,DIRECT
+  - IP-CIDR,192.168.0.0/16,DIRECT
+  - IP-CIDR,127.0.0.0/8,DIRECT
+  - IP-CIDR,17.0.0.0/8,DIRECT
+  - DOMAIN-SUFFIX,local,DIRECT
+  - GEOIP,CN,DIRECT
+  - MATCH,DIRECT
